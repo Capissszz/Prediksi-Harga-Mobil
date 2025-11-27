@@ -1,13 +1,16 @@
-
 import streamlit as st
 import pandas as pd
 import pickle
-import joblib
 
-# Load the trained Random Forest model
-model = joblib.load('model_car_price.pkl')
+# ================================
+# Load the trained Random Forest model (using pickle)
+# ================================
+with open('model_car_price.pkl', 'rb') as file:
+    model = pickle.load(file)
 
-# Streamlit app title
+# ================================
+# Streamlit UI
+# ================================
 st.title('Prediksi Harga Mobil (Car Price Prediction)')
 st.write('Aplikasi untuk memprediksi harga mobil berdasarkan parameter yang diberikan.')
 
@@ -39,36 +42,54 @@ df_input = user_input_features()
 st.subheader('Parameter Input Pengguna:')
 st.write(df_input)
 
-# === IMPORTANT ===
-# List EXACT columns used during model training after One-Hot Encoding
+# ================================
+# EXACT columns used in training (with OHE)
+# ================================
 training_columns_and_dtypes = {
     'year': 'int64',
     'mileage': 'int64',
     'engine_size': 'float64',
-    'fuel_type_Diesel': 'bool', 'fuel_type_Electric': 'bool',
-    'fuel_type_Hybrid': 'bool', 'fuel_type_Petrol': 'bool',
-    'transmission_Automatic': 'bool', 'transmission_Manual': 'bool',
-    'brand_Audi': 'bool', 'brand_BMW': 'bool', 'brand_Honda': 'bool',
-    'brand_Hyundai': 'bool', 'brand_Mercedes': 'bool', 'brand_Toyota': 'bool'
+
+    # Fuel type OHE
+    'fuel_type_Diesel': 'bool',
+    'fuel_type_Electric': 'bool',
+    'fuel_type_Hybrid': 'bool',
+    'fuel_type_Petrol': 'bool',
+
+    # Transmission OHE
+    'transmission_Automatic': 'bool',
+    'transmission_Manual': 'bool',
+
+    # Brand OHE
+    'brand_Audi': 'bool',
+    'brand_BMW': 'bool',
+    'brand_Honda': 'bool',
+    'brand_Hyundai': 'bool',
+    'brand_Mercedes': 'bool',
+    'brand_Toyota': 'bool'
 }
 
-# Create an empty DataFrame with correct structure
+# ================================
+# Create final input DataFrame
+# ================================
 final_input_df = pd.DataFrame(columns=training_columns_and_dtypes.keys())
+
+# Assign dtype
 for col, dtype in training_columns_and_dtypes.items():
     final_input_df[col] = final_input_df[col].astype(dtype)
 
-# Create an empty row default
+# Default row
 final_input_df.loc[0] = 0
 for col, dtype in training_columns_and_dtypes.items():
     if dtype == 'bool':
         final_input_df.loc[0, col] = False
 
-# Fill numerical features
+# Fill numerical inputs
 final_input_df.loc[0, 'year'] = df_input['year'][0]
 final_input_df.loc[0, 'mileage'] = df_input['mileage'][0]
 final_input_df.loc[0, 'engine_size'] = df_input['engine_size'][0]
 
-# Fill categorical one-hot
+# Fill categorical inputs (One-Hot Encoding)
 fuel_col = f"fuel_type_{df_input['fuel_type'][0]}"
 if fuel_col in final_input_df.columns:
     final_input_df.loc[0, fuel_col] = True
@@ -81,7 +102,9 @@ brand_col = f"brand_{df_input['brand'][0]}"
 if brand_col in final_input_df.columns:
     final_input_df.loc[0, brand_col] = True
 
+# ================================
 # Prediction
+# ================================
 if st.sidebar.button('Prediksi Harga Mobil'):
     try:
         prediction = model.predict(final_input_df)
@@ -90,4 +113,3 @@ if st.sidebar.button('Prediksi Harga Mobil'):
     except Exception as e:
         st.error(f"Terjadi kesalahan saat melakukan prediksi: {e}")
         st.exception(e)
-
