@@ -5,7 +5,7 @@ import pickle
 # ================================
 # Load the trained Random Forest model (using pickle)
 # ================================
-with open('model_car_price.pkl', 'rb') as file:
+with open('random_forest_regression_model.pkl', 'rb') as file:
     model = pickle.load(file)
 
 # ================================
